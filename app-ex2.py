@@ -41,6 +41,8 @@ def get_recipe(recipe_id):
 @app.route('/recipes', methods=['POST'])
 def create_recipe():
     data = request.get_json()
+    print(request)
+    print(data)
 
     name = data.get('name')
     description = data.get('description')

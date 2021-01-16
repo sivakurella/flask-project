@@ -1,5 +1,13 @@
-flask_workspace.code-workspace
+# test scripts
 hello.py
 hello1.py
+
+# vscode settings
 .vscode/settings.json
+flask_workspace.code-workspace
+
+# virtual env
 .flask/
+
+# compiled files
+*.pyc
