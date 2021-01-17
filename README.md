@@ -10,7 +10,7 @@ source .venv/Scripts/activate
 pip install -r requirements.txt
 
 ## run the flask server and test it away
-python app-ex2.py &
+python app_ex2.py &
 
 ## use http or curl or postman to test the apis
 http GET localhost:5000/recipes
