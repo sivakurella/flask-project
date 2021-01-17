@@ -5,3 +5,7 @@ httpie==1.0.2
 pylint==2.6.0
 requests==2.25.1
 rope==0.18.0
+passlib==1.7.4
+psycopg2-binary==2.8.6
+Flask-Migrate==2.5.3
+Flask-SQLAlchemy==2.4.4

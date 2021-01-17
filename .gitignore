@@ -11,3 +11,13 @@ flask_workspace.code-workspace
 
 # compiled files
 *.pyc
+kurellaz/env_vars.py
+__pycache__/
+
+
+# jupyter notebooks
+*.ipynb
+
+#flask-migrate folders
+migrations/
+kurellaz/.vscode/settings.json
