@@ -1,2 +1,2 @@
 # flask-project
-Building websites using flask Web framework
+Building apis using flask Web framework
