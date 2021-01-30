@@ -1,4 +1,5 @@
 from flask import request
+from flask_jwt_extended.view_decorators import jwt_required
 from flask_restful import Resource
 from http import HTTPStatus
 from flask_jwt_extended import jwt_optional, get_jwt_identity
@@ -61,6 +62,19 @@ class UserResource(Resource):
                 'id': user.id,
                 'username': user.username
             }
+
+        return data, HTTPStatus.OK
+
+class MeResource(Resource):
+    @jwt_required
+    def get(self):
+        user = User.get_by_id(id = get_jwt_identity())
+
+        data = {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email
+        }
 
         return data, HTTPStatus.OK
 

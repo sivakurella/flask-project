@@ -1,27 +1,30 @@
 from flask import request
 from flask_restful import Resource
 from http import HTTPStatus
-from kurellaz.models.recipe import Recipe, recipe_list
+from kurellaz.models.recipe import Recipe
 from kurellaz.extensions import db
+from flask_jwt_extended import jwt_optional, jwt_required, get_jwt_identity
 
 class RecipeListResource(Resource):
     def get(self):
         data = []
-        for recipe in Recipe.query.all():
-            if recipe.is_publish:
-                data.append(recipe.data)
+        for recipe in Recipe.get_all_published():
+            data.append(recipe.data)
 
-        return {'recipes': data}, HTTPStatus.OK
+        return {'data': data}, HTTPStatus.OK
 
+    @jwt_required
     def post(self):
         data = request.get_json()
+        current_user = get_jwt_identity()
 
         recipe = Recipe(
             name = data.get('name'),
             description= data.get('description'),
             num_of_servings=data.get('num_of_servings'),
             cook_time=data.get('cook_time'),
-            directions=data.get('directions')
+            directions=data.get('directions'),
+            user_id=current_user
         )
 
         recipe.save()
@@ -30,13 +33,19 @@ class RecipeListResource(Resource):
 
 
 class RecipeResource(Resource):
+    @jwt_optional
     def get(self, recipe_id):
-        recipe = next((recipe for recipe in Recipe.query.all() if recipe.id == recipe_id and recipe.is_publish == True), None)
+        recipe = Recipe.get_by_id(recipe_id=recipe_id)
 
-        if recipe:
-            return recipe.data, HTTPStatus.OK
+        if not recipe:
+            return {'message': 'Recipe not found'}, HTTPStatus.NOT_FOUND
 
-        return {'message': 'recipe not found'}, HTTPStatus.NOT_FOUND
+        current_user = get_jwt_identity()
+        
+        if recipe.is_publish == False and recipe.user_id != current_user:
+            return {'message': 'Access is not Allowed'}, HTTPStatus.FORBIDDEN
+
+        return recipe.data, HTTPStatus.OK
 
     def put(self, recipe_id):
         recipe = next((recipe for recipe in Recipe.query.all() if recipe.id == recipe_id), None)

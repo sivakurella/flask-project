@@ -1,18 +1,18 @@
 # recipe data model
 from kurellaz.extensions import db
 
-recipe_list = []
+# recipe_list = []
 
 
-def get_last_id():
-    ''' 
-        This function get the last recipe id from
-        the recipe_list or will return 1
-    '''
-    if recipe_list:
-        return recipe_list[-1].id + 1
+# def get_last_id():
+#     ''' 
+#         This function get the last recipe id from
+#         the recipe_list or will return 1
+#     '''
+#     if recipe_list:
+#         return recipe_list[-1].id + 1
 
-    return 1
+#     return 1
 
 
 class Recipe(db.Model):
@@ -41,7 +41,8 @@ class Recipe(db.Model):
             'description': self.description,
             'num_of_servings':self.num_of_servings,
             'cook_time': self.cook_time,
-            'directions': self.directions
+            'directions': self.directions,
+            'user_id': self.user_id
             }
 
     @classmethod
@@ -49,8 +50,8 @@ class Recipe(db.Model):
         return cls.query.filter_by(name=name).first()
 
     @classmethod
-    def get_by_id(cls, id):
-        return cls.query.filter_by(id=id).first()
+    def get_by_id(cls, recipe_id):
+        return cls.query.filter_by(id=recipe_id).first()
 
     def save(self):
         db.session.add(self)
@@ -59,3 +60,7 @@ class Recipe(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+
+    @classmethod
+    def get_all_published(cls):
+        return cls.query.filter_by(is_publish=True).all()

@@ -9,7 +9,7 @@ from kurellaz.extensions import db, jwt
 from kurellaz.models.user import User
 
 from kurellaz.resources.recipe import RecipeListResource, RecipePublishResource, RecipeResource
-from kurellaz.resources.user import UserResource, UserListResource
+from kurellaz.resources.user import UserResource, UserListResource, MeResource
 from kurellaz.resources.token import TokenResource
 
 
@@ -47,6 +47,7 @@ def register_resources(app):
     # user resources
     api.add_resource(UserListResource, '/users')
     api.add_resource(UserResource, '/users/<string:username>')
+    api.add_resource(MeResource, '/me')
 
     # jwt token resource
     api.add_resource(TokenResource, '/token')
