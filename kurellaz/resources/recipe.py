@@ -1,3 +1,4 @@
+import re
 from flask import request
 from flask_restful import Resource
 from http import HTTPStatus
@@ -31,6 +32,20 @@ class RecipeListResource(Resource):
 
         return recipe.data, HTTPStatus.CREATED
 
+class MyRecipeResource(Resource):
+    @jwt_required
+    def get(self):
+        data = []
+
+        # get the user identity
+        current_user = get_jwt_identity()
+
+        # get all the recipes of the userid
+        for recipe in Recipe.get_by_userid(user_id=current_user):
+                data.append(recipe.data)
+        
+        return {'data': data}, HTTPStatus.OK
+
 
 class RecipeResource(Resource):
     @jwt_optional
@@ -47,11 +62,16 @@ class RecipeResource(Resource):
 
         return recipe.data, HTTPStatus.OK
 
+    @jwt_required
     def put(self, recipe_id):
-        recipe = next((recipe for recipe in Recipe.query.all() if recipe.id == recipe_id), None)
+        recipe = Recipe.get_by_id(recipe_id=recipe_id)
 
         if not recipe:
             return {'message':'recipe #' + str(recipe_id) +  ' not found'}, HTTPStatus.NOT_FOUND
+
+        current_user = get_jwt_identity()
+        if current_user != recipe.user_id:
+            return {'message': 'Access is not Allowed'}, HTTPStatus.FORBIDDEN
 
         data = request.get_json()
 
@@ -76,25 +96,32 @@ class RecipeResource(Resource):
 
         return recipe.data, HTTPStatus.OK
 
+    @jwt_required
     def delete(self, recipe_id):
-        recipe = next((recipe for recipe in Recipe.query.all() if recipe.id == recipe_id), None)
+        recipe = Recipe.get_by_id(recipe_id=recipe_id)
 
         if not recipe:
-            return {'message':'recipe #' + str(recipe_id) +  " not found and can't be deleted"}, HTTPStatus.NOT_FOUND
+            return {'message':'recipe #' + str(recipe_id) +  ' not found'}, HTTPStatus.NOT_FOUND
+
+        current_user = get_jwt_identity()
+        if current_user != recipe.user_id:
+            return {'message': 'Access is not Allowed'}, HTTPStatus.FORBIDDEN
 
         recipe.delete()
-        db.session.commit()
-        
 
         return {}, HTTPStatus.NO_CONTENT
 
 class RecipePublishResource(Resource):
-
+    @jwt_required
     def put(self, recipe_id):
-        recipe = next((recipe for recipe in Recipe.query.all() if recipe.id == recipe_id), None)
+        recipe = Recipe.get_by_id(recipe_id=recipe_id)
 
         if recipe is None:
             return {'message': 'recipe not found'}, HTTPStatus.NOT_FOUND
+
+        current_user = get_jwt_identity()
+        if current_user != recipe.user_id:
+            return {'message': 'Access is not Allowed'}, HTTPStatus.FORBIDDEN
 
         recipe.is_publish = True
 
@@ -102,11 +129,16 @@ class RecipePublishResource(Resource):
 
         return {}, HTTPStatus.NO_CONTENT
 
+    @jwt_required
     def delete(self, recipe_id):
-        recipe = next((recipe for recipe in Recipe.query.all() if recipe.id == recipe_id), None)
+        recipe = Recipe.get_by_id(recipe_id=recipe_id)
 
         if recipe is None:
             return {'message': 'recipe not found'}, HTTPStatus.NOT_FOUND
+
+        current_user = get_jwt_identity()
+        if current_user != recipe.user_id:
+            return {'message': 'Access is not Allowed'}, HTTPStatus.FORBIDDEN
 
         recipe.is_publish = False
 

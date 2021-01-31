@@ -1,8 +1,7 @@
 from flask import request
-from flask_jwt_extended.view_decorators import jwt_required
 from flask_restful import Resource
 from http import HTTPStatus
-from flask_jwt_extended import jwt_optional, get_jwt_identity
+from flask_jwt_extended import jwt_optional, get_jwt_identity, jwt_required
 
 from kurellaz.models.user import User
 from kurellaz.extensions import db
@@ -24,6 +23,10 @@ class UserListResource(Resource):
         # check whether the email exists
         if User.get_by_email(email):
             return {'message': f'{email} already exists, please use other email address for registering'}, HTTPStatus.BAD_REQUEST
+
+        # check the length of the password
+        if len(non_hash_passwd) < 4:
+            return {'message': 'Length of the password has to >= 4'}, HTTPStatus.BAD_REQUEST
 
         # hash the user password
         hashed_password = utils.hash_password(non_hash_passwd)
