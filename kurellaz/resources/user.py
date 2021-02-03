@@ -2,19 +2,30 @@ from flask import request
 from flask_restful import Resource
 from http import HTTPStatus
 from flask_jwt_extended import jwt_optional, get_jwt_identity, jwt_required
+from marshmallow import ValidationError
 
+from kurellaz.schemas.user import UserSchema
 from kurellaz.models.user import User
 from kurellaz.extensions import db
 from kurellaz.utils import utils
+
+user_schema  = UserSchema()
+user_public_schema = UserSchema(exclude=('email',))
 
 class UserListResource(Resource):
     def post(self):
         data = request.get_json()
 
+        # lets load the data into the user schema
+        try:
+            user_data = user_schema.load(data=data)
+        except ValidationError as verr  :
+            return {'message': 'Validation Errors', 'errors':verr.messages}, HTTPStatus.BAD_REQUEST
+
         # parse data from the request
-        user = data.get('username')
+        user = user_data.get('username')
         non_hash_passwd = data.get('password')
-        email = data.get('email')
+        email = user_data.get('email')
 
         # check whether the user exists
         if User.get_by_username(user):
@@ -29,18 +40,19 @@ class UserListResource(Resource):
             return {'message': 'Length of the password has to >= 4'}, HTTPStatus.BAD_REQUEST
 
         # hash the user password
-        hashed_password = utils.hash_password(non_hash_passwd)
+        # hashed_password = utils.hash_password(non_hash_passwd)
 
         user = User(
-            username = user,
-            email = email,
-            password = hashed_password
+            **user_data
+            # username = user,
+            # email = email,
+            # password = hashed_password
         )
 
         # save the user and commit
         user.save()
 
-        return user.data, HTTPStatus.CREATED
+        return user_schema.dump(user), HTTPStatus.CREATED
     
 class UserResource(Resource):
     @jwt_optional
@@ -55,16 +67,18 @@ class UserResource(Resource):
         current_user = get_jwt_identity()
 
         if current_user == user.id:
-            data = {
-                'id': user.id,
-                'email': user.email,
-                'username': user.username
-            }
+            data = user_schema.dump(user)
+            # {
+            #     'id': user.id,
+            #     'email': user.email,
+            #     'username': user.username
+            # }
         else:
-            data = {
-                'id': user.id,
-                'username': user.username
-            }
+             data = user_public_schema.dump(user)
+            #  {
+            #     'id': user.id,
+            #     'username': user.username
+            # }
 
         return data, HTTPStatus.OK
 
@@ -73,11 +87,12 @@ class MeResource(Resource):
     def get(self):
         user = User.get_by_id(id = get_jwt_identity())
 
-        data = {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email
-        }
+        data = user_schema.dump(user)
+        #  {
+        #     "id": user.id,
+        #     "username": user.username,
+        #     "email": user.email
+        # }
 
         return data, HTTPStatus.OK
 

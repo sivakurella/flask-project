@@ -5,14 +5,19 @@ from http import HTTPStatus
 from kurellaz.models.recipe import Recipe
 from kurellaz.extensions import db
 from flask_jwt_extended import jwt_optional, jwt_required, get_jwt_identity
+from kurellaz.schemas.recipe import RecipeSchema
+
+recipe_schema = RecipeSchema()
+recipe_list_schema = RecipeSchema(many=True)
 
 class RecipeListResource(Resource):
     def get(self):
-        data = []
-        for recipe in Recipe.get_all_published():
-            data.append(recipe.data)
+        # data = []
+        # for recipe in Recipe.get_all_published():
+        #     data.append(recipe.data)
+        recipes = Recipe.get_all_published()
 
-        return {'data': data}, HTTPStatus.OK
+        return recipe_list_schema.dump(recipes), HTTPStatus.OK
 
     @jwt_required
     def post(self):

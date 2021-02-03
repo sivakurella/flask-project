@@ -30,10 +30,10 @@ class User(db.Model):
         db.session.add(self)
         db.session.commit()
 
-    @property
-    def data(self):
-        return {
-            'id': self.id,
-            'username': self.username,
-            'email': self.email
-            }
+    # @property
+    # def data(self):
+    #     return {
+    #         'id': self.id,
+    #         'username': self.username,
+    #         'email': self.email
+    #         }
