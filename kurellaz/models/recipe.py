@@ -1,6 +1,5 @@
 # recipe data model
 from kurellaz.extensions import db
-
 # recipe_list = []
 
 
@@ -25,8 +24,8 @@ class Recipe(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=True)
     description = db.Column(db.String(255))
-    num_of_servings = db.Column(db.Integer)
-    cook_time = db.Column(db.Integer)
+    num_of_servings = db.Column(db.Numeric(10,2))
+    cook_time = db.Column(db.Numeric(10,2))
     directions = db.Column(db.String(4000))
     is_publish = db.Column(db.Boolean(), default=False)
     created_at = db.Column(db.DateTime(), nullable=False, server_default=db.func.now())

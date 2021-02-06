@@ -8,12 +8,13 @@ def validate_num_of_servings(n):
 class RecipeSchema(Schema):
     class Meta:
         ordered=True
+        #render_module = simplejson
 
     id = fields.Int(dump_only=True)
     name = fields.String(required=True, validate=[validate.Length(max=100)])
     description = fields.String(required=True, validate=[validate.Length(max=200)])
-    num_of_servings = fields.Integer(validate=validate_num_of_servings)
-    cook_time = fields.Integer()
+    num_of_servings = fields.Decimal(validate=validate_num_of_servings,)
+    cook_time = fields.Decimal()
     directions = fields.String(required=True, validate=[validate.Length(max=4000)])
     is_publish = fields.Boolean(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
@@ -31,5 +32,10 @@ class RecipeSchema(Schema):
         if many:
             return {'data': data}
         return data
+
+    @classmethod
+    def get_load_only_fields(cls):
+        return [field for field in RecipeSchema. _declared_fields if not RecipeSchema._declared_fields[field].dump_only]
+
 
 

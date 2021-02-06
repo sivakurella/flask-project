@@ -1,6 +1,7 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify,make_response
 from flask_migrate import Migrate
 from flask_restful import Api
+import simplejson as json
 
 from kurellaz.config import Config
 
@@ -15,6 +16,7 @@ from kurellaz.resources.recipe import (
     MyRecipeResource)
 from kurellaz.resources.user import UserResource, UserListResource, MeResource
 from kurellaz.resources.token import RevokeResource, TokenResource, RefreshResource, black_list
+
 
 
 def create_app():
@@ -36,7 +38,7 @@ def create_app():
 def register_extensions(app):
     # flask migrate extention initialization
     db.init_app(app)
-    migrate = Migrate(app, db)
+    migrate = Migrate(app, db, compare_type=True)
 
     # jwt extension initialization
     jwt.init_app(app)
@@ -67,6 +69,14 @@ def register_resources(app):
     api.add_resource(TokenResource, '/token')
     api.add_resource(RefreshResource, '/refresh')
     api.add_resource(RevokeResource, '/revoke')
+
+    # using simplejson to deserialize the json data as default json causes errors
+    # also can override the Api class too
+    @api.representation('application/json')
+    def output_json(data, code, headers=None):
+        resp = make_response(json.dumps(data), code)
+        resp.headers.extend(headers or {})
+        return resp
 
 def register_urls(app):
     app.add_url_rule('/', 'index', index)
