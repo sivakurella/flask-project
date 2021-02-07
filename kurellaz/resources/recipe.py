@@ -3,6 +3,7 @@ from flask import request
 from flask_restful import Resource
 from http import HTTPStatus
 from kurellaz.models.recipe import Recipe
+from kurellaz.models.user import User
 from kurellaz.extensions import db
 from flask_jwt_extended import (
     jwt_optional,
@@ -34,8 +35,7 @@ class RecipeListResource(Resource):
         except ValidationError as verr  :
             return {'message': 'Validation Errors',\
                  'errors':verr.messages,
-                 'RecipeSchema': [field for field in recipe_schema.declared_fields \
-                     if not recipe_schema.declared_fields[field].dump_only]}\
+                 'RecipeSchema': RecipeSchema.get_load_only_fields()}\
                      , HTTPStatus.BAD_REQUEST
 
         recipe = Recipe(
@@ -59,7 +59,7 @@ class MyRecipeResource(Resource):
         current_user = get_jwt_identity()
 
         # get all the recipes of the userid
-        for recipe in Recipe.get_by_userid(user_id=current_user):
+        for recipe in Recipe.get_recipes(user_id=current_user, visibility='all'):
                 data.append(recipe)
 
         try:
@@ -171,3 +171,77 @@ class RecipePublishResource(Resource):
         recipe.save()
 
         return {}, HTTPStatus.NO_CONTENT
+
+class RecipeQueryListResource(Resource):
+    @jwt_optional
+    def get(self):
+        # lets get the current user
+        current_user = get_jwt_identity()
+
+        # also lets the arguments
+        args = request.args
+        #print(args)
+
+        # lets assign visibility=public
+        visibility_info=False
+        identity_info=False
+        arg_user=None
+
+        # validate the arguments
+        for arg in args:
+            if arg not in RecipeSchema._declared_fields and arg not in ['visibility','user_name','user_id'] :
+                return {'message': f'Invalid query String: {arg}'}, HTTPStatus.BAD_REQUEST
+            if arg == 'visibility':
+                visibility_info=True
+            if arg == 'user_name':
+                identity_info=True
+                try:
+                    arg_user = User.get_by_username(args[arg]).id
+                except:
+                    return {'message': 'Bad user_name provided'}, HTTPStatus.BAD_REQUEST
+            if arg == 'user_id':
+                identity_info=True
+                try:
+                    arg_user = User.get_by_id(args[arg]).id
+                except:
+                    return {'message': 'Bad user_id provided'}, HTTPStatus.BAD_REQUEST
+
+        # cleanup the args
+        query_args = {**args}
+        if 'user_name' in args:
+            query_args.pop('user_name')
+        #print(query_args)
+
+
+        print(visibility_info, identity_info,arg_user, current_user)
+
+        # if we know the user then we can get the public and private recipes of the user
+        recipes = []
+        if identity_info and current_user != arg_user :
+            recipes += Recipe.get_recipes(**{**query_args, **{'user_id':arg_user, \
+                            'visibility': 'public'}})
+        elif identity_info and current_user == arg_user :
+            if visibility_info:
+                recipes += Recipe.get_recipes(**{**query_args, **{'user_id':arg_user, \
+                            'visibility': args['visibility']}})
+            else:
+                recipes += Recipe.get_recipes(**{**query_args, **{'user_id':arg_user, \
+                            'visibility': 'all'}})
+        elif current_user:
+            if visibility_info:
+                recipes += Recipe.get_recipes(**{**query_args, **{'user_id':current_user, \
+                            'visibility': args['visibility']}})
+            else:
+                recipes += Recipe.get_recipes(**{**query_args, **{'user_id':current_user, \
+                            'visibility': 'all'}})
+        else:
+            recipes += Recipe.get_recipes(**{**args, **{ \
+                            'visibility': 'public'}})
+
+        
+        try:
+            json_data = recipe_list_schema.dump(recipes)
+        except:
+            return {'message': 'Kaboom something is messed up'}, HTTPStatus.INTERNAL_SERVER_ERROR
+        
+        return json_data, HTTPStatus.OK

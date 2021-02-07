@@ -53,8 +53,20 @@ class Recipe(db.Model):
         return cls.query.filter_by(id=recipe_id).first()
 
     @classmethod
-    def get_by_userid(cls, user_id):
-        return cls.query.filter_by(user_id=user_id).all()
+    def get_recipes(cls, visibility='public', **kwargs):
+        print(kwargs, visibility)
+        if visibility == 'public':
+            queryargs = {**kwargs, **{'is_publish':True}}
+            recipes = cls.query.filter_by(**queryargs).all()
+            return recipes
+        elif visibility == 'private':
+            queryargs = {**kwargs, **{'is_publish':False}}
+            recipes = cls.query.filter_by(**queryargs).all()
+            return recipes
+        elif visibility == 'all':
+            return cls.query.filter_by(**kwargs).all()
+        else:
+            return []
 
     def save(self):
         db.session.add(self)

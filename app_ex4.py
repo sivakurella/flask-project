@@ -13,7 +13,8 @@ from kurellaz.resources.recipe import (
     RecipeListResource, 
     RecipePublishResource, 
     RecipeResource,
-    MyRecipeResource)
+    MyRecipeResource,
+    RecipeQueryListResource)
 from kurellaz.resources.user import UserResource, UserListResource, MeResource
 from kurellaz.resources.token import RevokeResource, TokenResource, RefreshResource, black_list
 
@@ -55,20 +56,23 @@ def register_resources(app):
     api = Api(app)
 
     # recipe resources
-    api.add_resource(RecipeListResource, '/recipes')
-    api.add_resource(RecipeResource, '/recipes/<int:recipe_id>')
-    api.add_resource(RecipePublishResource, '/recipes/<int:recipe_id>/publish')
-    api.add_resource(MyRecipeResource, '/myrecipes')
+    api.add_resource(RecipeListResource, '/recipes', strict_slashes=False)
+    api.add_resource(RecipeResource, '/recipes/<int:recipe_id>', strict_slashes=False)
+    api.add_resource(RecipePublishResource, '/recipes/<int:recipe_id>/publish', strict_slashes=False)
+    api.add_resource(MyRecipeResource, '/myrecipes', strict_slashes=False)
 
     # user resources
-    api.add_resource(UserListResource, '/users')
-    api.add_resource(UserResource, '/users/<string:username>')
-    api.add_resource(MeResource, '/me')
+    api.add_resource(UserListResource, '/users', strict_slashes=False)
+    api.add_resource(UserResource, '/users/<string:username>', strict_slashes=False)
+    api.add_resource(MeResource, '/me', strict_slashes=False)
 
     # jwt token resource
-    api.add_resource(TokenResource, '/token')
-    api.add_resource(RefreshResource, '/refresh')
-    api.add_resource(RevokeResource, '/revoke')
+    api.add_resource(TokenResource, '/token', strict_slashes=False)
+    api.add_resource(RefreshResource, '/refresh', strict_slashes=False)
+    api.add_resource(RevokeResource, '/revoke', strict_slashes=False)
+
+    # query recipes
+    api.add_resource(RecipeQueryListResource,'/query', strict_slashes=False)
 
     # using simplejson to deserialize the json data as default json causes errors
     # also can override the Api class too
