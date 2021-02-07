@@ -91,8 +91,16 @@ class RecipeResource(Resource):
         return json_data, HTTPStatus.OK
 
     @jwt_required
-    def put(self, recipe_id):
+    def patch(self, recipe_id):
         recipe = Recipe.get_by_id(recipe_id=recipe_id)
+
+        # lets the json request data
+        data = request.get_json()
+
+        try:
+            recipe_data = recipe_schema.load(data=data, partial=('name','description','directions'))
+        except ValidationError as err:
+            return {'message': 'Validation Errors', 'errors':err.messages}, HTTPStatus.BAD_REQUEST
 
         if not recipe:
             return {'message':'recipe #' + str(recipe_id) +  ' not found'}, HTTPStatus.NOT_FOUND
@@ -101,28 +109,18 @@ class RecipeResource(Resource):
         if current_user != recipe.user_id:
             return {'message': 'Access is not Allowed'}, HTTPStatus.FORBIDDEN
 
-        data = request.get_json()
+        
 
         # parse data from the request
-        name = data.get('name')
-        description = data.get('description')
-        num_of_servings = data.get('num_of_servings')
-        cook_time = data.get('cook_time')
-        directions = data.get('directions')
-
-        if name:
-            recipe.name = name
-        if description:
-            recipe.description = description
-        
-        # update the rest of the attributes
-        recipe.num_of_servings = num_of_servings
-        recipe.cook_time = cook_time
-        recipe.directions  = directions
+        recipe.name = recipe_data.get('name') or recipe.name
+        recipe.description = data.get('description') or recipe.description
+        recipe.num_of_servings = data.get('num_of_servings') or recipe.num_of_servings
+        recipe.cook_time = data.get('cook_time') or recipe.cook_time
+        recipe.directions = data.get('directions') or recipe.directions
 
         recipe.save()
 
-        return recipe.data, HTTPStatus.OK
+        return recipe_schema.dump(recipe), HTTPStatus.OK
 
     @jwt_required
     def delete(self, recipe_id):
