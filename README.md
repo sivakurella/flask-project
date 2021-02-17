@@ -14,3 +14,5 @@ python app_ex4.py &
 
 ## use http or curl or postman to test the apis
 http GET localhost:5000/recipes
+
+> This was inspired by Python API Development Fundamentals by Jack Huang and Ray Chung
